@@ -61,7 +61,7 @@ supported_cpus = ['ppc', 'ppc64', 's390x', 'riscv', 'x86', 'x86_64',
 cpu = host_machine.cpu_family()
 
 # Unify riscv* to a single family.
-if cpu in ['riscv32', 'riscv64']
+if cpu in ['riscv32', 'riscv64', 'riscv32be', 'riscv64be']
   cpu = 'riscv'
 endif
 
@@ -114,7 +114,7 @@ elif cpu in ['ppc', 'ppc64']
 elif cpu in ['mips', 'mips64']
   kvm_targets = ['mips-softmmu', 'mipsel-softmmu', 'mips64-softmmu', 'mips64el-softmmu']
 elif cpu in ['riscv']
-  kvm_targets = ['riscv32-softmmu', 'riscv64-softmmu']
+  kvm_targets = ['riscv32-softmmu', 'riscv64-softmmu', 'riscv32be-softmmu', 'riscv64be-softmmu']
 else
   kvm_targets = []
 endif
