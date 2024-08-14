@@ -31,6 +31,7 @@
 #include "sysemu/qtest.h"
 #include "sysemu/kvm.h"
 #include "sysemu/reset.h"
+#include "exec/tswap.h"
 
 #include <libfdt.h>
 
@@ -388,10 +389,24 @@ void riscv_setup_rom_reset_vec(MachineState *machine, RISCVHartArrayState *harts
     uint32_t start_addr_hi32 = 0x00000000;
     uint32_t fdt_load_addr_hi32 = 0x00000000;
 
+    start_addr = tswap32(start_addr);
+    fdt_load_addr = tswap32(fdt_load_addr);
+
     if (!riscv_is_32bit(harts)) {
-        start_addr_hi32 = start_addr >> 32;
-        fdt_load_addr_hi32 = fdt_load_addr >> 32;
+        start_addr_hi32 = tswap32(start_addr >> 32);
+        fdt_load_addr_hi32 = tswap32(fdt_load_addr >> 32);
+    
+         if (target_needs_bswap()) {
+            uint32_t temp = start_addr;
+            start_addr = start_addr_hi32;
+            start_addr_hi32 = temp;
+
+            temp = fdt_load_addr;
+            fdt_load_addr = fdt_load_addr_hi32;
+            fdt_load_addr_hi32 = temp;
+        }
     }
+
     /* reset vector */
     uint32_t reset_vec[10] = {
         0x00000297,                  /* 1:  auipc  t0, %pcrel_hi(fw_dyn) */
