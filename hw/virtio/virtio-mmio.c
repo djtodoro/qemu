@@ -519,7 +519,7 @@ static void virtio_mmio_write(void *opaque, hwaddr offset, uint64_t value,
 static const MemoryRegionOps virtio_legacy_mem_ops = {
     .read = virtio_mmio_read,
     .write = virtio_mmio_write,
-    .endianness = DEVICE_NATIVE_ENDIAN,
+    .endianness = DEVICE_HOST_ENDIAN,
 };
 
 static const MemoryRegionOps virtio_mem_ops = {
