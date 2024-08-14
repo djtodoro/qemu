@@ -1046,8 +1046,8 @@ restart:
              */
             *pte_pa = pte = updated_pte;
 #else
-            target_ulong old_pte = qatomic_cmpxchg(pte_pa, pte, updated_pte);
-            if (old_pte != pte) {
+            target_ulong old_pte = qatomic_cmpxchg(pte_pa, pte, tswapl(updated_pte));
+            if (tswapl(old_pte) != pte) {
                 goto restart;
             }
             pte = updated_pte;
@@ -1589,7 +1589,7 @@ void riscv_cpu_do_interrupt(CPUState *cs)
     CPURISCVState *env = &cpu->env;
     bool write_gva = false;
     uint64_t s;
-
+    
     /*
      * cs->exception is 32-bits wide unlike mcause which is XLEN-bits wide
      * so we mask off the MSB and separate into trap type and cause.
