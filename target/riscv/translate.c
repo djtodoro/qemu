@@ -25,6 +25,7 @@
 #include "exec/exec-all.h"
 #include "exec/helper-proto.h"
 #include "exec/helper-gen.h"
+#include "exec/tswap.h"
 
 #include "exec/translator.h"
 #include "exec/log.h"
@@ -296,7 +297,7 @@ static void exit_tb(DisasContext *ctx)
 static void gen_goto_tb(DisasContext *ctx, int n, target_long diff)
 {
     target_ulong dest = ctx->base.pc_next + diff;
-
+    
      /*
       * Under itrigger, instruction executes one by one like singlestep,
       * direct block chain benefits will be small.
@@ -571,7 +572,7 @@ static void gen_set_fpr_d(DisasContext *ctx, int reg_num, TCGv_i64 t)
 static void gen_jal(DisasContext *ctx, int rd, target_ulong imm)
 {
     TCGv succ_pc = dest_gpr(ctx, rd);
-
+    
     /* check misaligned: */
     if (!has_ext(ctx, RVC) && !ctx->cfg_ptr->ext_zca) {
         if ((imm & 0x3) != 0) {
@@ -1157,9 +1158,9 @@ static void decode_opc(CPURISCVState *env, DisasContext *ctx, uint16_t opcode)
         }
     } else {
         uint32_t opcode32 = opcode;
-        opcode32 = deposit32(opcode32, 16, 16,
-                             translator_lduw(env, &ctx->base,
-                                             ctx->base.pc_next + 2));
+        uint16_t opcode_hi = translator_lduw(env, &ctx->base,
+                                             ctx->base.pc_next + 2);
+        opcode32 = deposit32(opcode32, 16, 16, tswap16(opcode_hi));
         ctx->opcode = opcode32;
 
         for (size_t i = 0; i < ARRAY_SIZE(decoders); ++i) {
@@ -1230,6 +1231,7 @@ static void riscv_tr_translate_insn(DisasContextBase *dcbase, CPUState *cpu)
     DisasContext *ctx = container_of(dcbase, DisasContext, base);
     CPURISCVState *env = cpu->env_ptr;
     uint16_t opcode16 = translator_lduw(env, &ctx->base, ctx->base.pc_next);
+    opcode16 = tswap16(opcode16);
 
     ctx->ol = ctx->xl;
     decode_opc(env, ctx, opcode16);
@@ -1244,6 +1246,7 @@ static void riscv_tr_translate_insn(DisasContextBase *dcbase, CPUState *cpu)
 
             if (page_ofs > TARGET_PAGE_SIZE - MAX_INSN_LEN) {
                 uint16_t next_insn = cpu_lduw_code(env, ctx->base.pc_next);
+                next_insn = tswap16(next_insn);
                 int len = insn_len(next_insn);
 
                 if (!is_same_page(&ctx->base, ctx->base.pc_next + len - 1)) {
