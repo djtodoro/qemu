@@ -55,6 +55,11 @@ supported_cpus = ['ppc64', 's390x', 'riscv64', 'x86_64',
 
 cpu = host_machine.cpu_family()
 
+# Unify riscv64be to riscv64.
+if cpu == 'riscv64be'
+  cpu = 'riscv64'
+endif
+
 target_dirs = config_host['TARGET_DIRS'].split()
 
 # type of binaries to build
@@ -281,7 +286,7 @@ elif cpu == 'ppc64'
 elif cpu == 'mips64'
   kvm_targets = ['mips-softmmu', 'mipsel-softmmu', 'mips64-softmmu', 'mips64el-softmmu']
 elif cpu == 'riscv64'
-  kvm_targets = ['riscv64-softmmu']
+  kvm_targets = ['riscv32-softmmu', 'riscv64-softmmu', 'riscv32be-softmmu', 'riscv64be-softmmu']
 elif cpu == 'loongarch64'
   kvm_targets = ['loongarch64-softmmu']
 else
