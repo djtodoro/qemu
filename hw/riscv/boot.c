@@ -350,15 +350,15 @@ void riscv_rom_copy_firmware_info(MachineState *machine, hwaddr rom_base,
     size_t dinfo_len;
 
     if (sizeof(dinfo.magic) == 4) {
-        dinfo.magic = cpu_to_le32(FW_DYNAMIC_INFO_MAGIC_VALUE);
-        dinfo.version = cpu_to_le32(FW_DYNAMIC_INFO_VERSION);
-        dinfo.next_mode = cpu_to_le32(FW_DYNAMIC_INFO_NEXT_MODE_S);
-        dinfo.next_addr = cpu_to_le32(kernel_entry);
+        dinfo.magic = tswap32(FW_DYNAMIC_INFO_MAGIC_VALUE);
+        dinfo.version = tswap32(FW_DYNAMIC_INFO_VERSION);
+        dinfo.next_mode = tswap32(FW_DYNAMIC_INFO_NEXT_MODE_S);
+        dinfo.next_addr = tswap32(kernel_entry);
     } else {
-        dinfo.magic = cpu_to_le64(FW_DYNAMIC_INFO_MAGIC_VALUE);
-        dinfo.version = cpu_to_le64(FW_DYNAMIC_INFO_VERSION);
-        dinfo.next_mode = cpu_to_le64(FW_DYNAMIC_INFO_NEXT_MODE_S);
-        dinfo.next_addr = cpu_to_le64(kernel_entry);
+        dinfo.magic = tswapl(FW_DYNAMIC_INFO_MAGIC_VALUE);
+        dinfo.version = tswapl(FW_DYNAMIC_INFO_VERSION);
+        dinfo.next_mode = tswapl(FW_DYNAMIC_INFO_NEXT_MODE_S);
+        dinfo.next_addr = tswapl(kernel_entry);
     }
     dinfo.options = 0;
     dinfo.boot_hart = 0;
