@@ -442,6 +442,10 @@ static void rv64_veyron_v1_cpu_init(Object *obj)
     set_misa(env, MXL_RV64, RVG | RVC | RVS | RVU | RVH);
     env->priv_ver = PRIV_VERSION_1_12_0;
 
+#if defined(TARGET_BIG_ENDIAN) && !defined(CONFIG_USER_ONLY)
+    env->mstatus |= MSTATUS_UBE;
+#endif
+
     /* Enable ISA extensions */
     cpu->cfg.mmu = true;
     cpu->cfg.ext_icbom = true;
