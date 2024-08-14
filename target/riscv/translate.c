@@ -23,6 +23,8 @@
 #include "exec/helper-proto.h"
 #include "exec/helper-gen.h"
 #include "exec/target_page.h"
+#include "exec/tswap.h"
+
 #include "exec/translator.h"
 #include "accel/tcg/cpu-ldst.h"
 #include "exec/translation-block.h"
@@ -302,7 +304,7 @@ static void gen_goto_tb(DisasContext *ctx, unsigned tb_slot_idx,
                         target_long diff)
 {
     target_ulong dest = ctx->base.pc_next + diff;
-
+    
      /*
       * Under itrigger, instruction executes one by one like singlestep,
       * direct block chain benefits will be small.
@@ -617,7 +619,7 @@ static void gen_ctr_jal(DisasContext *ctx, int rd, target_ulong imm)
 static void gen_jal(DisasContext *ctx, int rd, target_ulong imm)
 {
     TCGv succ_pc = dest_gpr(ctx, rd);
-
+    
     /* check misaligned: */
     if (!riscv_cpu_allow_16bit_insn(ctx->cfg_ptr,
                                     ctx->priv_ver,
@@ -1253,13 +1255,13 @@ static void decode_opc(CPURISCVState *env, DisasContext *ctx)
          * real one is 2 or 4 bytes. Instruction preload wouldn't trigger
          * additional page fault.
          */
-        opcode = translator_ldl(env, &ctx->base, ctx->base.pc_next);
+        opcode = tswap32(translator_ldl(env, &ctx->base, ctx->base.pc_next));
     } else {
         /*
          * For unaligned pc, instruction preload may trigger additional
          * page fault so we only load 2 bytes here.
          */
-        opcode = (uint32_t) translator_lduw(env, &ctx->base, ctx->base.pc_next);
+        opcode = (uint32_t) tswap16(translator_lduw(env, &ctx->base, ctx->base.pc_next));
     }
     ctx->ol = ctx->xl;
 
@@ -1278,9 +1280,9 @@ static void decode_opc(CPURISCVState *env, DisasContext *ctx)
     } else {
         if (!pc_is_4byte_align) {
             /* Load last 2 bytes of instruction here */
-            opcode = deposit32(opcode, 16, 16,
-                               translator_lduw(env, &ctx->base,
-                                               ctx->base.pc_next + 2));
+            uint16_t opcode_hi = translator_lduw(env, &ctx->base,
+                                                 ctx->base.pc_next + 2);
+            opcode = deposit32(opcode, 16, 16, tswap16(opcode_hi));
         }
         ctx->opcode = opcode;
 
@@ -1396,6 +1398,7 @@ static void riscv_tr_translate_insn(DisasContextBase *dcbase, CPUState *cpu)
             if (page_ofs > TARGET_PAGE_SIZE - MAX_INSN_LEN) {
                 uint16_t next_insn =
                     translator_lduw(env, &ctx->base, ctx->base.pc_next);
+                next_insn = tswap16(next_insn);
                 int len = insn_len(next_insn);
 
                 if (!translator_is_same_page(&ctx->base, ctx->base.pc_next + len - 1)) {
