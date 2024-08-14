@@ -716,6 +716,9 @@ static void riscv_cpu_reset_hold(Object *obj, ResetType type)
             env->mstatus = set_field(env->mstatus, MSTATUS_MDT, 1);
         }
     }
+#if defined(TARGET_BIG_ENDIAN)
+    env->mstatus |= MSTATUS_UBE;
+#endif
     env->mcause = 0;
     env->miclaim = MIP_SGEIP;
     env->pc = env->resetvec;
