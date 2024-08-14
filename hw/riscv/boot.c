@@ -396,19 +396,33 @@ void riscv_rom_copy_firmware_info(MachineState *machine,
     size_t dinfo_len;
 
     if (riscv_is_32bit(harts)) {
+#if TARGET_BIG_ENDIAN
+        dinfo32.magic = cpu_to_be32(FW_DYNAMIC_INFO_MAGIC_VALUE);
+        dinfo32.version = cpu_to_be32(FW_DYNAMIC_INFO_VERSION);
+        dinfo32.next_mode = cpu_to_be32(FW_DYNAMIC_INFO_NEXT_MODE_S);
+        dinfo32.next_addr = cpu_to_be32(kernel_entry);
+#else
         dinfo32.magic = cpu_to_le32(FW_DYNAMIC_INFO_MAGIC_VALUE);
         dinfo32.version = cpu_to_le32(FW_DYNAMIC_INFO_VERSION);
         dinfo32.next_mode = cpu_to_le32(FW_DYNAMIC_INFO_NEXT_MODE_S);
         dinfo32.next_addr = cpu_to_le32(kernel_entry);
+#endif
         dinfo32.options = 0;
         dinfo32.boot_hart = 0;
         dinfo_ptr = &dinfo32;
         dinfo_len = sizeof(dinfo32);
     } else {
+#if TARGET_BIG_ENDIAN
+        dinfo64.magic = cpu_to_be64(FW_DYNAMIC_INFO_MAGIC_VALUE);
+        dinfo64.version = cpu_to_be64(FW_DYNAMIC_INFO_VERSION);
+        dinfo64.next_mode = cpu_to_be64(FW_DYNAMIC_INFO_NEXT_MODE_S);
+        dinfo64.next_addr = cpu_to_be64(kernel_entry);
+#else
         dinfo64.magic = cpu_to_le64(FW_DYNAMIC_INFO_MAGIC_VALUE);
         dinfo64.version = cpu_to_le64(FW_DYNAMIC_INFO_VERSION);
         dinfo64.next_mode = cpu_to_le64(FW_DYNAMIC_INFO_NEXT_MODE_S);
         dinfo64.next_addr = cpu_to_le64(kernel_entry);
+#endif
         dinfo64.options = 0;
         dinfo64.boot_hart = 0;
         dinfo_ptr = &dinfo64;
