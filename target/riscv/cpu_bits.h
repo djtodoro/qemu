@@ -557,6 +557,8 @@
 #define MSTATUS_TSR         0x00400000 /* since: priv-1.10 */
 #define MSTATUS_SPELP       0x00800000 /* zicfilp */
 #define MSTATUS_MPELP       0x020000000000 /* zicfilp */
+#define MSTATUS_SBE         0x1000000000ULL
+#define MSTATUS_MBE         0x2000000000ULL
 #define MSTATUS_GVA         0x4000000000ULL
 #define MSTATUS_MPV         0x8000000000ULL
 
@@ -581,6 +583,7 @@ typedef enum {
 #define SSTATUS_SIE         0x00000002
 #define SSTATUS_UPIE        0x00000010
 #define SSTATUS_SPIE        0x00000020
+#define SSTATUS_UBE         0x00000040
 #define SSTATUS_SPP         0x00000100
 #define SSTATUS_VS          0x00000600
 #define SSTATUS_FS          0x00006000

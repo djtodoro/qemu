@@ -1613,7 +1613,7 @@ static RISCVException write_mstatus(CPURISCVState *env, int csrno,
     mask = MSTATUS_SIE | MSTATUS_SPIE | MSTATUS_MIE | MSTATUS_MPIE |
         MSTATUS_SPP | MSTATUS_MPRV | MSTATUS_SUM |
         MSTATUS_MPP | MSTATUS_MXR | MSTATUS_TVM | MSTATUS_TSR |
-        MSTATUS_TW;
+        MSTATUS_TW | MSTATUS_MBE;
 
     if (riscv_has_ext(env, RVF)) {
         mask |= MSTATUS_FS;
@@ -1637,6 +1637,13 @@ static RISCVException write_mstatus(CPURISCVState *env, int csrno,
     }
 
     mstatus = (mstatus & ~mask) | (val & mask);
+
+    /* Handle SBE and UBE being read-only copies of MBE */
+    if (mstatus & MSTATUS_MBE) {
+        mstatus |= MSTATUS_SBE | MSTATUS_UBE;
+    } else {
+        mstatus &= ~(MSTATUS_SBE | MSTATUS_UBE);
+    }
 
     env->mstatus = mstatus;
 
