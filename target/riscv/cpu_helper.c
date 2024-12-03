@@ -206,6 +206,7 @@ void cpu_get_tb_cpu_state(CPURISCVState *env, vaddr *pc,
     }
 #endif
 
+    flags = FIELD_DP32(flags, TB_FLAGS, BE_DATA, !!(env->mstatus & MSTATUS_MBE));
     flags = FIELD_DP32(flags, TB_FLAGS, FS, fs);
     flags = FIELD_DP32(flags, TB_FLAGS, VS, vs);
     flags = FIELD_DP32(flags, TB_FLAGS, XL, env->xl);
