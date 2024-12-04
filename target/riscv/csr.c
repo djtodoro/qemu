@@ -1645,6 +1645,12 @@ static RISCVException write_mstatus(CPURISCVState *env, int csrno,
         mstatus &= ~(MSTATUS_SBE | MSTATUS_UBE);
     }
 
+    /* Check for an endian change */
+    if ((env->mstatus & MSTATUS_MBE) != (mstatus & MSTATUS_MBE)) {
+        // Equivalent of sfence.vma
+        tlb_flush(env_cpu(env));
+    }
+
     env->mstatus = mstatus;
 
     /*
