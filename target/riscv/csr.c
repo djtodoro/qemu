@@ -2982,7 +2982,8 @@ static RISCVException read_sstatus_i128(CPURISCVState *env, int csrno,
 static RISCVException read_sstatus(CPURISCVState *env, int csrno,
                                    target_ulong *val)
 {
-    target_ulong mask = (sstatus_v1_10_mask);
+    // Allow reading from SSTATUS_UBE
+    target_ulong mask = sstatus_v1_10_mask | SSTATUS_UBE;
     if (env->xl != MXL_RV32 || env->debugger) {
         mask |= SSTATUS64_UXL;
     }
@@ -2999,7 +3000,8 @@ static RISCVException read_sstatus(CPURISCVState *env, int csrno,
 static RISCVException write_sstatus(CPURISCVState *env, int csrno,
                                     target_ulong val)
 {
-    target_ulong mask = (sstatus_v1_10_mask);
+    // Disallow writing to SSTATUS_UBE as read-only
+    target_ulong mask = (sstatus_v1_10_mask) & (~SSTATUS_UBE);
 
     if (env->xl != MXL_RV32 || env->debugger) {
         if ((val & SSTATUS64_UXL) != 0) {
