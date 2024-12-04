@@ -34,6 +34,8 @@ static bool gen_lr(DisasContext *ctx, arg_atomic *a, MemOp mop)
 {
     TCGv src1;
 
+    mop |= ctx->be_data;
+
     decode_save_opc(ctx, 0);
     src1 = get_address(ctx, a->rs1, 0);
     if (a->rl) {
@@ -60,6 +62,8 @@ static bool gen_sc(DisasContext *ctx, arg_atomic *a, MemOp mop)
     TCGv dest, src1, src2;
     TCGLabel *l1 = gen_new_label();
     TCGLabel *l2 = gen_new_label();
+
+    mop |= ctx->be_data;
 
     decode_save_opc(ctx, 0);
     src1 = get_address(ctx, a->rs1, 0);
