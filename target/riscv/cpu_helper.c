@@ -923,6 +923,7 @@ static int get_physical_address(CPURISCVState *env, hwaddr *physical,
 
     hwaddr base;
     int levels, ptidxbits, ptesize, vm, widened;
+    bool is_be = env->mstatus & MSTATUS_SBE;
 
     if (first_stage == true) {
         if (use_background) {
@@ -1006,7 +1007,7 @@ static int get_physical_address(CPURISCVState *env, hwaddr *physical,
     }
 
     int ptshift = (levels - 1) * ptidxbits;
-    target_ulong pte;
+    target_ulong lpte, pte;
     hwaddr pte_addr;
     int i;
 
@@ -1056,9 +1057,15 @@ restart:
         }
 
         if (riscv_cpu_mxl(env) == MXL_RV32) {
-            pte = address_space_ldl(cs->as, pte_addr, attrs, &res);
+            pte = lpte = address_space_ldl(cs->as, pte_addr, attrs, &res);
+            if (is_be) {
+                pte = be32_to_cpu(lpte);
+            }
         } else {
-            pte = address_space_ldq(cs->as, pte_addr, attrs, &res);
+            pte = lpte = address_space_ldq(cs->as, pte_addr, attrs, &res);
+            if (is_be) {
+                pte = be64_to_cpu(lpte);
+            }
         }
 
         if (res != MEMTX_OK) {
@@ -1227,6 +1234,16 @@ restart:
          */
         MemoryRegion *mr;
         hwaddr l = sxlen_bytes, addr1;
+        target_ulong store_pte = updated_pte;
+
+        if (is_be) {
+            if (riscv_cpu_sxl(env) == MXL_RV32) {
+                store_pte = cpu_to_be32(updated_pte);
+            } else {
+                store_pte = cpu_to_be64(updated_pte);
+            }
+        }
+
         mr = address_space_translate(cs->as, pte_addr, &addr1, &l,
                                      false, MEMTXATTRS_UNSPECIFIED);
         if (memory_region_is_ram(mr)) {
@@ -1236,15 +1253,17 @@ restart:
              * MTTCG is not enabled on oversized TCG guests so
              * page table updates do not need to be atomic
              */
-            *pte_pa = pte = updated_pte;
+            pte = updated_pte;
+            *pte_pa = store_pte;
 #else
             target_ulong old_pte;
+
             if (riscv_cpu_sxl(env) == MXL_RV32) {
-                old_pte = qatomic_cmpxchg((uint32_t *)pte_pa, pte, updated_pte);
+                old_pte = qatomic_cmpxchg((uint32_t *)pte_pa, lpte, store_pte);
             } else {
-                old_pte = qatomic_cmpxchg(pte_pa, pte, updated_pte);
+                old_pte = qatomic_cmpxchg(pte_pa, lpte, store_pte);
             }
-            if (old_pte != pte) {
+            if (old_pte != lpte) {
                 goto restart;
             }
             pte = updated_pte;
