@@ -3543,8 +3543,6 @@ static RISCVException read_hstatus(CPURISCVState *env, int csrno,
         /* We only support 64-bit VSXL */
         *val = set_field(*val, HSTATUS_VSXL, 2);
     }
-    /* We only support little endian */
-    *val = set_field(*val, HSTATUS_VSBE, 0);
     return RISCV_EXCP_NONE;
 }
 
@@ -3556,9 +3554,7 @@ static RISCVException write_hstatus(CPURISCVState *env, int csrno,
         qemu_log_mask(LOG_UNIMP,
                       "QEMU does not support mixed HSXLEN options.");
     }
-    if (get_field(val, HSTATUS_VSBE) != 0) {
-        qemu_log_mask(LOG_UNIMP, "QEMU does not support big endian guests.");
-    }
+
     return RISCV_EXCP_NONE;
 }
 
