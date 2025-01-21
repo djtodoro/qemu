@@ -120,6 +120,40 @@ bool cpu_get_bcfien(CPURISCVState *env)
     }
 }
 
+static bool riscv_get_be(CPURISCVState *env)
+{
+    target_ulong bit = 0;
+
+    if (env->virt_enabled) {
+        switch (env->priv) {
+        case PRV_S:
+            bit = env->hstatus & HSTATUS_VSBE;
+            break;
+        case PRV_U:
+            bit = env->vsstatus & MSTATUS_UBE;
+            break;
+        default:
+            g_assert_not_reached();
+        }
+    } else {
+        switch (env->priv) {
+        case PRV_M:
+            bit = env->mstatus & MSTATUS_MBE;
+            break;
+        case PRV_S:
+            bit = env->mstatus & MSTATUS_SBE;
+            break;
+        case PRV_U:
+            bit = env->mstatus & MSTATUS_UBE;
+            break;
+        default:
+            g_assert_not_reached();
+        }
+    }
+
+    return bit ? true : false;
+}
+
 void cpu_get_tb_cpu_state(CPURISCVState *env, vaddr *pc,
                           uint64_t *cs_base, uint32_t *pflags)
 {
@@ -206,7 +240,7 @@ void cpu_get_tb_cpu_state(CPURISCVState *env, vaddr *pc,
     }
 #endif
 
-    flags = FIELD_DP32(flags, TB_FLAGS, BE_DATA, !!(env->mstatus & MSTATUS_MBE));
+    flags = FIELD_DP32(flags, TB_FLAGS, BE_DATA, riscv_get_be(env));
     flags = FIELD_DP32(flags, TB_FLAGS, FS, fs);
     flags = FIELD_DP32(flags, TB_FLAGS, VS, vs);
     flags = FIELD_DP32(flags, TB_FLAGS, XL, env->xl);
