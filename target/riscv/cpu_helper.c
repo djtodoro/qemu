@@ -923,7 +923,18 @@ static int get_physical_address(CPURISCVState *env, hwaddr *physical,
 
     hwaddr base;
     int levels, ptidxbits, ptesize, vm, widened;
-    bool is_be = env->mstatus & MSTATUS_SBE;
+    bool is_be;
+
+    if (first_stage) {
+        if (use_background) {
+            is_be = env->hstatus & HSTATUS_VSBE;
+        } else {
+            is_be = env->mstatus & MSTATUS_SBE;
+        }
+    } else {
+        /* think the hypervisor lookup, we mirror the host's supervisor */
+        is_be = env->mstatus & MSTATUS_SBE;
+    }
 
     if (first_stage == true) {
         if (use_background) {
