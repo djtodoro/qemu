@@ -645,7 +645,8 @@ void riscv_cpu_swap_hypervisor_regs(CPURISCVState *env)
 {
     uint64_t mstatus_mask = MSTATUS_MXR | MSTATUS_SUM |
                             MSTATUS_SPP | MSTATUS_SPIE | MSTATUS_SIE |
-                            MSTATUS64_UXL | MSTATUS_VS;
+                            MSTATUS64_UXL | MSTATUS_VS |
+                            MSTATUS_UBE;
 
     if (riscv_has_ext(env, RVF)) {
         mstatus_mask |= MSTATUS_FS;
