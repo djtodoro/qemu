@@ -1615,7 +1615,7 @@ static RISCVException write_mstatus(CPURISCVState *env, int csrno,
     mask = MSTATUS_SIE | MSTATUS_SPIE | MSTATUS_MIE | MSTATUS_MPIE |
         MSTATUS_SPP | MSTATUS_MPRV | MSTATUS_SUM |
         MSTATUS_MPP | MSTATUS_MXR | MSTATUS_TVM | MSTATUS_TSR |
-        MSTATUS_TW | MSTATUS_MBE | MSTATUS_SBE | SSTATUS_UBE; 
+        MSTATUS_TW | MSTATUS_MBE | MSTATUS_SBE | SSTATUS_UBE;
 
     if (riscv_has_ext(env, RVF)) {
         mask |= MSTATUS_FS;
@@ -3001,7 +3001,7 @@ static RISCVException read_sstatus(CPURISCVState *env, int csrno,
 static RISCVException write_sstatus(CPURISCVState *env, int csrno,
                                     target_ulong val)
 {
-    target_ulong mask = (sstatus_v1_10_mask) | SSTATUS_UBE;
+    target_ulong mask = (sstatus_v1_10_mask) /* | SSTATUS_UBE */;
 
     if (env->xl != MXL_RV32 || env->debugger) {
         if ((val & SSTATUS64_UXL) != 0) {
