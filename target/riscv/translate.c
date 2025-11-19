@@ -1124,13 +1124,40 @@ static bool gen_cmpxchg(DisasContext *ctx, arg_atomic *a, MemOp mop)
     return true;
 }
 
+/*
+ * RISC-V instructions are always little-endian, even on big-endian systems.
+ * We need to always byte-swap back to little-endian after translator_lduw/ldl,
+ * since those functions apply tswap based on TARGET_BIG_ENDIAN.
+ */
+static inline uint16_t riscv_translator_lduw(CPUArchState *env, DisasContextBase *db, vaddr pc)
+{
+    uint16_t insn = translator_lduw(env, db, pc);
+#ifdef TARGET_BIG_ENDIAN
+    /* translator_lduw already swapped to big-endian, swap back to LE */
+    return bswap16(insn);
+#else
+    return insn;
+#endif
+}
+
+static inline uint32_t riscv_translator_ldl(CPUArchState *env, DisasContextBase *db, vaddr pc)
+{
+    uint32_t insn = translator_ldl(env, db, pc);
+#ifdef TARGET_BIG_ENDIAN
+    /* translator_ldl already swapped to big-endian, swap back to LE */
+    return bswap32(insn);
+#else
+    return insn;
+#endif
+}
+
 static uint32_t opcode_at(DisasContextBase *dcbase, target_ulong pc)
 {
     DisasContext *ctx = container_of(dcbase, DisasContext, base);
     CPUState *cpu = ctx->cs;
     CPURISCVState *env = cpu_env(cpu);
 
-    return translator_ldl(env, &ctx->base, pc);
+    return riscv_translator_ldl(env, &ctx->base, pc);
 }
 
 #define SS_MMU_INDEX(ctx) (ctx->mem_idx | MMU_IDX_SS_WRITE)
@@ -1204,8 +1231,8 @@ static void decode_opc(CPURISCVState *env, DisasContext *ctx, uint16_t opcode)
     } else {
         uint32_t opcode32 = opcode;
         opcode32 = deposit32(opcode32, 16, 16,
-                             translator_lduw(env, &ctx->base,
-                                             ctx->base.pc_next + 2));
+                             riscv_translator_lduw(env, &ctx->base,
+                                                   ctx->base.pc_next + 2));
         ctx->opcode = opcode32;
 
         for (guint i = 0; i < ctx->decoders->len; ++i) {
@@ -1283,7 +1310,7 @@ static void riscv_tr_translate_insn(DisasContextBase *dcbase, CPUState *cpu)
 {
     DisasContext *ctx = container_of(dcbase, DisasContext, base);
     CPURISCVState *env = cpu_env(cpu);
-    uint16_t opcode16 = translator_lduw(env, &ctx->base, ctx->base.pc_next);
+    uint16_t opcode16 = riscv_translator_lduw(env, &ctx->base, ctx->base.pc_next);
 
     ctx->ol = ctx->xl;
     decode_opc(env, ctx, opcode16);
@@ -1316,7 +1343,7 @@ static void riscv_tr_translate_insn(DisasContextBase *dcbase, CPUState *cpu)
 
             if (page_ofs > TARGET_PAGE_SIZE - MAX_INSN_LEN) {
                 uint16_t next_insn =
-                    translator_lduw(env, &ctx->base, ctx->base.pc_next);
+                    riscv_translator_lduw(env, &ctx->base, ctx->base.pc_next);
                 int len = insn_len(next_insn);
 
                 if (!is_same_page(&ctx->base, ctx->base.pc_next + len - 1)) {

@@ -618,7 +618,9 @@ static void rv64e_bare_cpu_init(Object *obj)
 static void rv64_big_endian_bare_cpu_init(Object *obj)
 {
     CPURISCVState *env = &RISCV_CPU(obj)->env;
+#ifndef CONFIG_USER_ONLY
     env->mstatus |= (MSTATUS_MBE | MSTATUS_SBE | MSTATUS_UBE);
+#endif
     riscv_cpu_set_misa_ext(env, RVE);
 }
 

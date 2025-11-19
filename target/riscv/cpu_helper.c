@@ -122,6 +122,17 @@ bool cpu_get_bcfien(CPURISCVState *env)
 
 static bool riscv_get_be(CPURISCVState *env)
 {
+#ifdef CONFIG_USER_ONLY
+    /*
+     * In user-mode, we don't have access to CSRs. The endianness
+     * is determined by the ELF flags at startup.
+     */
+#ifdef TARGET_BIG_ENDIAN
+    return true;
+#else
+    return false;
+#endif
+#else
     target_ulong bit = 0;
 
     if (env->virt_enabled) {
@@ -152,6 +163,7 @@ static bool riscv_get_be(CPURISCVState *env)
     }
 
     return bit ? true : false;
+#endif
 }
 
 void cpu_get_tb_cpu_state(CPURISCVState *env, vaddr *pc,
