@@ -12,10 +12,16 @@
 
 #ifdef TARGET_RISCV32
 #define ELF_CLASS               ELFCLASS32
-#define VDSO_HEADER             "vdso-32.c.inc"
 #else
 #define ELF_CLASS               ELFCLASS64
-#define VDSO_HEADER             "vdso-64.c.inc"
+#endif
+
+#if !TARGET_BIG_ENDIAN
+# ifdef TARGET_RISCV32
+#  define VDSO_HEADER            "vdso-32.c.inc"
+# else
+#  define VDSO_HEADER            "vdso-64.c.inc"
+# endif
 #endif
 
 #define HAVE_ELF_HWCAP          1
