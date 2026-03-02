@@ -64,7 +64,8 @@ struct TranslationBlock {
      * x86: the original user, the Code Segment virtual base,
      * arm: an extension of tb->flags,
      * s390x: instruction data for EXECUTE,
-     * sparc: the next pc of the instruction queue (for delay slots).
+     * sparc: the next pc of the instruction queue (for delay slots),
+     * riscv: misa_ext in bits 0-25, data endianness in bit 32.
      */
     uint64_t cs_base;
 
