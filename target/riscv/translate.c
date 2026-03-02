@@ -119,6 +119,8 @@ typedef struct DisasContext {
     bool fcfi_lp_expected;
     /* zicfiss extension, if shadow stack was enabled during TB gen */
     bool bcfi_enabled;
+    /* Data endianness from MSTATUS UBE/SBE/MBE */
+    bool big_endian;
 } DisasContext;
 
 static inline bool has_ext(DisasContext *ctx, uint32_t ext)
@@ -128,14 +130,7 @@ static inline bool has_ext(DisasContext *ctx, uint32_t ext)
 
 static inline MemOp mo_endian(DisasContext *ctx)
 {
-    /*
-     * A couple of bits in MSTATUS set the endianness:
-     *  - MSTATUS_UBE (User-mode),
-     *  - MSTATUS_SBE (Supervisor-mode),
-     *  - MSTATUS_MBE (Machine-mode)
-     * but we don't implement that yet.
-     */
-    return MO_TE;
+    return ctx->big_endian ? MO_BE : MO_LE;
 }
 
 #ifdef TARGET_RISCV32
@@ -1346,6 +1341,7 @@ static void riscv_tr_init_disas_context(DisasContextBase *dcbase, CPUState *cs)
     ctx->zero = tcg_constant_tl(0);
     ctx->virt_inst_excp = false;
     ctx->decoders = cpu->decoders;
+    ctx->big_endian = ctx->base.tb->cs_base & TB_CSBASE_BIG_ENDIAN;
 }
 
 static void riscv_tr_tb_start(DisasContextBase *db, CPUState *cpu)

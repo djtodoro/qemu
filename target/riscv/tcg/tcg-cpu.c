@@ -189,10 +189,17 @@ static TCGTBCPUState riscv_get_tb_cpu_state(CPUState *cs)
     flags = FIELD_DP32(flags, TB_FLAGS, PM_PMM, riscv_pm_get_pmm(env));
     flags = FIELD_DP32(flags, TB_FLAGS, PM_SIGNEXTEND, pm_signext);
 
+    uint64_t cs_base = env->misa_ext;
+#ifndef CONFIG_USER_ONLY
+    if (riscv_cpu_data_is_big_endian(env)) {
+        cs_base |= TB_CSBASE_BIG_ENDIAN;
+    }
+#endif
+
     return (TCGTBCPUState){
         .pc = env->xl == MXL_RV32 ? env->pc & UINT32_MAX : env->pc,
         .flags = flags,
-        .cs_base = env->misa_ext,
+        .cs_base = cs_base,
     };
 }
 
