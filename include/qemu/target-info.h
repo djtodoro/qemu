@@ -51,6 +51,15 @@ const char *target_cpu_type(void);
 bool target_big_endian(void);
 
 /**
+ * target_set_big_endian:
+ * @big_endian: the new endianness setting
+ *
+ * Set the target endianness at runtime. Used by bi-endian targets
+ * (e.g. RISC-V) where data endianness is a runtime CPU property.
+ */
+void target_set_big_endian(bool big_endian);
+
+/**
  * target_base_arm:
  *
  * Returns whether the target architecture is ARM or Aarch64.

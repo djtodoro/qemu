@@ -22,7 +22,7 @@ QEMU_BUILD_BUG_ON(offsetof(ArchCPU, env) != sizeof(CPUState));
 QEMU_BUILD_BUG_ON(TARGET_PAGE_BITS < TARGET_PAGE_BITS_MIN);
 #endif
 
-static const TargetInfo target_info_stub = {
+static TargetInfo target_info_stub = {
     .target_name = TARGET_NAME,
     .target_arch = glue(SYS_EMU_TARGET_, TARGET_ARCH),
     .long_bits = TARGET_LONG_BITS,
@@ -43,4 +43,10 @@ static const TargetInfo target_info_stub = {
 const TargetInfo *target_info(void)
 {
     return &target_info_stub;
+}
+
+void target_set_big_endian(bool big_endian)
+{
+    target_info_stub.endianness = big_endian
+        ? ENDIAN_MODE_BIG : ENDIAN_MODE_LITTLE;
 }

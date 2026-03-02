@@ -34,6 +34,7 @@
 #include "system/device_tree.h"
 #include "system/kvm.h"
 #include "system/tcg.h"
+#include "qemu/target-info.h"
 #include "kvm/kvm_riscv.h"
 #include "tcg/tcg-cpu.h"
 #include "tcg/tcg.h"
@@ -939,6 +940,10 @@ static void riscv_cpu_realize(DeviceState *dev, Error **errp)
     if (local_err != NULL) {
         error_propagate(errp, local_err);
         return;
+    }
+
+    if (cpu->cfg.big_endian) {
+        target_set_big_endian(true);
     }
 
     riscv_cpu_register_gdb_regs_for_features(cs);
@@ -2641,6 +2646,7 @@ RISCVCPUImpliedExtsRule *riscv_multi_ext_implied_rules[] = {
 
 static const Property riscv_cpu_properties[] = {
     DEFINE_PROP_BOOL("debug", RISCVCPU, cfg.debug, true),
+    DEFINE_PROP_BOOL("big-endian", RISCVCPU, cfg.big_endian, false),
 
     {.name = "pmu-mask", .info = &prop_pmu_mask},
     {.name = "pmu-num", .info = &prop_pmu_num}, /* Deprecated */
