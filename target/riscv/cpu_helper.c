@@ -1365,9 +1365,13 @@ static int get_physical_address(CPURISCVState *env, hwaddr *physical,
         }
 
         if (riscv_cpu_mxl(env) == MXL_RV32) {
-            pte = address_space_ldl(cs->as, pte_addr, attrs, &res);
+            pte = riscv_cpu_data_is_big_endian(env)
+                ? address_space_ldl_be(cs->as, pte_addr, attrs, &res)
+                : address_space_ldl_le(cs->as, pte_addr, attrs, &res);
         } else {
-            pte = address_space_ldq(cs->as, pte_addr, attrs, &res);
+            pte = riscv_cpu_data_is_big_endian(env)
+                ? address_space_ldq_be(cs->as, pte_addr, attrs, &res)
+                : address_space_ldq_le(cs->as, pte_addr, attrs, &res);
         }
 
         if (res != MEMTX_OK) {
@@ -1567,11 +1571,21 @@ static int get_physical_address(CPURISCVState *env, hwaddr *physical,
             target_ulong *pte_pa = qemu_map_ram_ptr(mr->ram_block, addr1);
             target_ulong old_pte;
             if (riscv_cpu_sxl(env) == MXL_RV32) {
-                old_pte = qatomic_cmpxchg((uint32_t *)pte_pa, cpu_to_le32(pte), cpu_to_le32(updated_pte));
-                old_pte = le32_to_cpu(old_pte);
+                if (riscv_cpu_data_is_big_endian(env)) {
+                    old_pte = qatomic_cmpxchg((uint32_t *)pte_pa, cpu_to_be32(pte), cpu_to_be32(updated_pte));
+                    old_pte = be32_to_cpu(old_pte);
+                } else {
+                    old_pte = qatomic_cmpxchg((uint32_t *)pte_pa, cpu_to_le32(pte), cpu_to_le32(updated_pte));
+                    old_pte = le32_to_cpu(old_pte);
+                }
             } else {
-                old_pte = qatomic_cmpxchg(pte_pa, cpu_to_le64(pte), cpu_to_le64(updated_pte));
-                old_pte = le64_to_cpu(old_pte);
+                if (riscv_cpu_data_is_big_endian(env)) {
+                    old_pte = qatomic_cmpxchg(pte_pa, cpu_to_be64(pte), cpu_to_be64(updated_pte));
+                    old_pte = be64_to_cpu(old_pte);
+                } else {
+                    old_pte = qatomic_cmpxchg(pte_pa, cpu_to_le64(pte), cpu_to_le64(updated_pte));
+                    old_pte = le64_to_cpu(old_pte);
+                }
             }
             if (old_pte != pte) {
                 goto restart;
