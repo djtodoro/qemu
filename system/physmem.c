@@ -2929,7 +2929,7 @@ static const MemoryRegionOps subpage_ops = {
     .valid.min_access_size = 1,
     .valid.max_access_size = 8,
     .valid.accepts = subpage_accepts,
-    .endianness = DEVICE_NATIVE_ENDIAN,
+    .endianness = DEVICE_LITTLE_ENDIAN,
 };
 
 static int subpage_register(subpage_t *mmio, uint32_t start, uint32_t end,
