@@ -1825,7 +1825,7 @@ static const target_ulong vs_delegable_excps = DELEGABLE_EXCPS &
       (1ULL << (RISCV_EXCP_STORE_GUEST_AMO_ACCESS_FAULT)));
 static const target_ulong sstatus_v1_10_mask = SSTATUS_SIE | SSTATUS_SPIE |
     SSTATUS_UIE | SSTATUS_UPIE | SSTATUS_SPP | SSTATUS_FS | SSTATUS_XS |
-    SSTATUS_SUM | SSTATUS_MXR | SSTATUS_VS;
+    SSTATUS_SUM | SSTATUS_MXR | SSTATUS_VS | SSTATUS_UBE;
 
 /*
  * Spec allows for bits 13:63 to be either read-only or writable.
@@ -4609,8 +4609,11 @@ static RISCVException read_hstatus(CPURISCVState *env, int csrno,
         /* We only support 64-bit VSXL */
         *val = set_field(*val, HSTATUS_VSXL, 2);
     }
-    /* We only support little endian */
-    *val = set_field(*val, HSTATUS_VSBE, 0);
+    /*
+     * QEMU models fixed-endian harts, so VSBE follows the CPU
+     * configuration and is not writable by the guest.
+     */
+    *val = set_field(*val, HSTATUS_VSBE, riscv_cpu_cfg(env)->big_endian);
     return RISCV_EXCP_NONE;
 }
 
@@ -4618,6 +4621,8 @@ static RISCVException write_hstatus(CPURISCVState *env, int csrno,
                                     target_ulong val, uintptr_t ra)
 {
     uint64_t mask = (target_ulong)-1;
+    mask &= ~HSTATUS_VSBE;
+
     if (!env_archcpu(env)->cfg.ext_svukte) {
         mask &= ~HSTATUS_HUKTE;
     }
@@ -4628,13 +4633,12 @@ static RISCVException write_hstatus(CPURISCVState *env, int csrno,
         mask &= ~HSTATUS_HUPMM;
     }
     env->hstatus = (env->hstatus & ~mask) | (val & mask);
+    env->hstatus = set_field(env->hstatus, HSTATUS_VSBE,
+                             riscv_cpu_cfg(env)->big_endian);
 
     if (riscv_cpu_mxl(env) != MXL_RV32 && get_field(val, HSTATUS_VSXL) != 2) {
         qemu_log_mask(LOG_UNIMP,
                       "QEMU does not support mixed HSXLEN options.");
-    }
-    if (get_field(val, HSTATUS_VSBE) != 0) {
-        qemu_log_mask(LOG_UNIMP, "QEMU does not support big endian guests.");
     }
     return RISCV_EXCP_NONE;
 }
@@ -5190,7 +5194,8 @@ static RISCVException write_hviprio2h(CPURISCVState *env, int csrno,
 static RISCVException read_vsstatus(CPURISCVState *env, int csrno,
                                     target_ulong *val)
 {
-    *val = env->vsstatus;
+    *val = set_field(env->vsstatus, MSTATUS_UBE,
+                     riscv_cpu_cfg(env)->big_endian);
     return RISCV_EXCP_NONE;
 }
 
@@ -5198,6 +5203,8 @@ static RISCVException write_vsstatus(CPURISCVState *env, int csrno,
                                      target_ulong val, uintptr_t ra)
 {
     uint64_t mask = (target_ulong)-1;
+    mask &= ~MSTATUS_UBE;
+
     if ((val & VSSTATUS64_UXL) == 0) {
         mask &= ~VSSTATUS64_UXL;
     }
@@ -5209,6 +5216,8 @@ static RISCVException write_vsstatus(CPURISCVState *env, int csrno,
         val &= ~SSTATUS_SDT;
     }
     env->vsstatus = (env->vsstatus & ~mask) | (uint64_t)val;
+    env->vsstatus = set_field(env->vsstatus, MSTATUS_UBE,
+                              riscv_cpu_cfg(env)->big_endian);
     return RISCV_EXCP_NONE;
 }
 
