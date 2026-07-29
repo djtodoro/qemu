@@ -34,6 +34,7 @@
 #include "migration/vmstate.h"
 #include "fpu/softfloat-helpers.h"
 #include "system/device_tree.h"
+#include "system/hw_accel.h"
 #include "system/kvm.h"
 #include "system/tcg.h"
 #include "kvm/kvm_riscv.h"
@@ -2643,6 +2644,15 @@ static int64_t riscv_get_arch_id(CPUState *cs)
     return cpu->env.mhartid;
 }
 
+static bool riscv_cpu_internal_is_big_endian(CPUState *cs)
+{
+    RISCVCPU *cpu = RISCV_CPU(cs);
+    CPURISCVState *env = &cpu->env;
+
+    cpu_synchronize_state(cs);
+    return mo_endian_env(env) == MO_BE;
+}
+
 #include "hw/core/sysemu-cpu-ops.h"
 
 static const struct SysemuCPUOps riscv_sysemu_ops = {
@@ -2650,6 +2660,7 @@ static const struct SysemuCPUOps riscv_sysemu_ops = {
     .get_phys_addr_debug = riscv_cpu_get_phys_addr_debug,
     .write_elf64_note = riscv_cpu_write_elf64_note,
     .write_elf32_note = riscv_cpu_write_elf32_note,
+    .internal_is_big_endian = riscv_cpu_internal_is_big_endian,
     .monitor_get_register = riscv_monitor_get_register_legacy,
     .legacy_vmsd = &vmstate_riscv_cpu,
 };
